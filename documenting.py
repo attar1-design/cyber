@@ -13,20 +13,23 @@ def check(pathF):
     while True:
         results = win32file.ReadDirectoryChangesW(hDir, 1024, True, 0x1F, None, None)
         for action, file in results:
+            if action == 1 and "לא מאושר" in file:
+                continue
+
             print(f"{actions[action]}: {file}")
             logging.info(f"{actions[action]}: {file}")
             if action == 1:
-                time.sleep(4)
+                time.sleep(1)
                 if file.endswith(IMAGE_EXTENSIONS):
                     src_file = os.path.join(pathF, file)
                     dst_file = os.path.join("images", file)
                     if os.path.exists(src_file):
-                        shutil.copy2(src_file, dst_file)
+                        shutil.copy(src_file, dst_file)
 
 if not os.path.exists("images"):
     os.makedirs("images")
 
-IMAGE_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff')
+IMAGE_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff', '.jfif')
 
 
 actions = {
@@ -58,8 +61,8 @@ while True:
     if command == "exit":
         break
 
-    url = f"https://www.google.com/search?q={command}&tbm=isch"
-    webbrowser.open(url)
+url = f"https://www.google.com/search?q={command}&tbm=isch"
+webbrowser.open(url)
 
 
 
