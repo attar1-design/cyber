@@ -23,7 +23,7 @@ def check_clolision(q, qValid, print_q):
         if color == 0 and num_ball in positions.keys():
             qValid.put((color, positions[num_ball]))
             del positions[num_ball]
-            print_q.put(f"there are {positions.keys()}")
+            print_q.put(f"there are {int(len(positions) + 1)} balls")
             continue
 
         if positions:
@@ -33,12 +33,14 @@ def check_clolision(q, qValid, print_q):
                 for p in positions.values():
                     distance = math.dist(pos, p)
                     if distance < 60:
-                        pos[1] += 5
+                        x = random.randint(30, 770)
+                        y = random.randint(30, 570)
+                        pos = [x, y]
                         isColided = True
                         break
         qValid.put((color, pos))
         if num_ball not in positions.keys():
-            print_q.put(f"there are {positions.keys() + 1}")
+            print_q.put(f"there are {int(len(positions) + 1)} balls")
         positions[num_ball] = pos
 
     print_q.put(f"clolision done! ")
@@ -65,15 +67,17 @@ def create_ball(num_ball, q, print_q):
         q.put((0, pos, num_ball))
 
 
-    print_q.put(f"ball {num_balls} has been deleted( he ha he ha)")
+    print_q.put(f"ball {num_ball} has been deleted")
 # RADIUS = 30
 
 if __name__ == '__main__':
     import pygame
 
     print_q = multiprocessing.Queue()
-    q_first_check = multiprocessing.Queue()
+    q = multiprocessing.Queue()
     qValid = multiprocessing.Queue()
+    printing_time_buddy = multiprocessing.Process(target=print_proc, args=(print_q,))
+    printing_time_buddy.start()
     num_balls = int(input("enter number of balls to draw "))
 
     # events_dictionary = {}
@@ -81,7 +85,7 @@ if __name__ == '__main__':
     #     events_dictionary[i] = multiprocessing.Event()
 
 
-    para_adoma = multiprocessing.Process(target=check_clolision, args=(q_first_check,qValid,print_q,))
+    para_adoma = multiprocessing.Process(target=check_clolision, args=(q,qValid,print_q,))
     para_adoma.start()
 
     pygame.init()
@@ -91,7 +95,7 @@ if __name__ == '__main__':
 
 
     for i in range(1, num_balls+1):
-        process = multiprocessing.Process(target=create_ball, args=(i,q_first_check,print_q,))
+        process = multiprocessing.Process(target=create_ball, args=(i,q,print_q,))
         process.start()
 
 
