@@ -1,4 +1,3 @@
-import pygame
 import multiprocessing
 import random
 import time
@@ -9,6 +8,8 @@ def check_collision():
 
     # print(f"ball {num_ball} removed, jumped {num_jumps} times")
 
+def check_clolision():
+    pass
 
 def create_ball(num_ball, q):
     print(f"ball {num_ball} created")
@@ -20,15 +21,20 @@ def create_ball(num_ball, q):
         random.randint(0, 255)
     )
 
-    x = random.randint(30, 770)
-    y = random.randint(30, 570)
-    pos = (x, y)
-    q.put((color, pos))
+    times = random.randint(1, 10)
+    for i in range(times):
 
 
+        x = random.randint(30, 770)
+        y = random.randint(30, 570)
+        pos = (x, y)
+        q.put((color, pos))
+        time.sleep(1)
+        q.put((0, pos))
 
 
 if __name__ == '__main__':
+    import pygame
     q = multiprocessing.Queue()
     num_balls = int(input("enter number of balls to draw "))
     print(num_balls)
@@ -43,21 +49,21 @@ if __name__ == '__main__':
         process  = multiprocessing.Process(target=create_ball, args=(i,q,))
         process .start()
 
+
+
+
+
+
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                break
+
         color, pos = q.get()
         pygame.draw.circle(screen, color, pos, 30)
         pygame.display.flip()
-        time.sleep(1)
 
-
-
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-
-
-        pygame.display.flip()
 
 
 
