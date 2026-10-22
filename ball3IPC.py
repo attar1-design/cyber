@@ -4,40 +4,48 @@ import time
 import math
 
 
+def print_proc(print_q):
 
+    #if finished_q.empty():
+    while True:
+        print(print_q.get())
 
 
 
     # print(f"ball {num_ball} removed, jumped {num_jumps} times")
 
-def check_clolision(q, qValid):
+def check_clolision(q, qValid, print_q):
     print("in clolision")
-    positions = []
+    positions = {}  # [num_ball] = [pos]
     while True:
-        color, pos = q.get()
-        isColided = False
-        if positions and color != 0:
-            for p in positions:
-                distance = math.dist(pos, p)
-                if not distance > 60:
-                    # create a new pos
-                    isColided = True
+        color, pos, num_ball = q.get()
+
+        if color == 0 and num_ball in positions.keys():
+            qValid.put((color, positions[num_ball]))
+            del positions[num_ball]
+            print_q.put(f"there are {positions.keys()}")
+            continue
+
+        if positions:
+            isColided = True
+            while isColided:
+                isColided = False
+                for p in positions.values():
+                    distance = math.dist(pos, p)
+                    if distance < 60:
+                        pos[1] += 5
+                        isColided = True
+                        break
+        qValid.put((color, pos))
+        if num_ball not in positions.keys():
+            print_q.put(f"there are {positions.keys() + 1}")
+        positions[num_ball] = pos
+
+    print_q.put(f"clolision done! ")
 
 
-        if isColided == False:
-            qValid.put((color, pos))
-            if not color == 0:
-                positions.append(pos)
-            else:
-                for p in positions:
-                    if pos == p:
-                        positions.remove(pos)
-
-
-
-def create_ball(num_ball, q):
-    print(f"ball {num_ball} created")
-
+def create_ball(num_ball, q, print_q):
+    print_q.put(f"ball {num_ball} has been created")
     # num_jumps = random.randint(1, 10)
     # for i in range(num_jumps):
     color = (
@@ -48,37 +56,44 @@ def create_ball(num_ball, q):
 
     times = random.randint(1, 10)
     for i in range(times):
-
-
         x = random.randint(30, 770)
         y = random.randint(30, 570)
-        pos = (x, y)
-        q.put((color, pos))
+        pos = [x, y]
+        q.put((color, pos, num_ball))
+
         time.sleep(1)
-        q.put((0, pos))
+        q.put((0, pos, num_ball))
 
 
+    print_q.put(f"ball {num_balls} has been deleted( he ha he ha)")
 # RADIUS = 30
 
 if __name__ == '__main__':
     import pygame
-    q = multiprocessing.Queue()
+
+    print_q = multiprocessing.Queue()
+    q_first_check = multiprocessing.Queue()
     qValid = multiprocessing.Queue()
     num_balls = int(input("enter number of balls to draw "))
-    print(num_balls)
-    pygame.init()
 
-    screen = pygame.display.set_mode((800, 600))
-    pygame.display.set_caption("Circle")
+    # events_dictionary = {}
+    # for i in range(1, num_balls + 1):
+    #     events_dictionary[i] = multiprocessing.Event()
 
-    screen.fill(0)
 
-    para_adoma = multiprocessing.Process(target=check_clolision, args=(q,qValid,))
+    para_adoma = multiprocessing.Process(target=check_clolision, args=(q_first_check,qValid,print_q,))
     para_adoma.start()
 
+    pygame.init()
+    screen = pygame.display.set_mode((800, 600))
+    screen.fill(0)
+    pygame.display.set_caption("Circle")
+
+
     for i in range(1, num_balls+1):
-        process  = multiprocessing.Process(target=create_ball, args=(i,q,))
-        process .start()
+        process = multiprocessing.Process(target=create_ball, args=(i,q_first_check,print_q,))
+        process.start()
+
 
 
     while True:
@@ -86,10 +101,10 @@ if __name__ == '__main__':
             if event.type == pygame.QUIT:
                 break
 
-        color, pos = qValid.get()
-
-        pygame.draw.circle(screen, color, pos, 30)
-        pygame.display.flip()
+        if not qValid.empty():
+            color, pos = qValid.get()
+            pygame.draw.circle(screen, color, pos, 30)
+            pygame.display.flip()
 
 
 
