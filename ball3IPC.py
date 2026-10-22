@@ -1,18 +1,43 @@
 import multiprocessing
 import random
 import time
+import math
 
-def check_collision():
-    pass
+
+
+
 
 
     # print(f"ball {num_ball} removed, jumped {num_jumps} times")
 
-def check_clolision():
-    pass
+def check_clolision(q, qValid):
+    print("in clolision")
+    positions = []
+    while True:
+        color, pos = q.get()
+        isColided = False
+        if positions and color != 0:
+            for p in positions:
+                distance = math.dist(pos, p)
+                if not distance > 60:
+                    # create a new pos
+                    isColided = True
+
+
+        if isColided == False:
+            qValid.put((color, pos))
+            if not color == 0:
+                positions.append(pos)
+            else:
+                for p in positions:
+                    if pos == p:
+                        positions.remove(pos)
+
+
 
 def create_ball(num_ball, q):
     print(f"ball {num_ball} created")
+
     # num_jumps = random.randint(1, 10)
     # for i in range(num_jumps):
     color = (
@@ -33,9 +58,12 @@ def create_ball(num_ball, q):
         q.put((0, pos))
 
 
+# RADIUS = 30
+
 if __name__ == '__main__':
     import pygame
     q = multiprocessing.Queue()
+    qValid = multiprocessing.Queue()
     num_balls = int(input("enter number of balls to draw "))
     print(num_balls)
     pygame.init()
@@ -45,14 +73,12 @@ if __name__ == '__main__':
 
     screen.fill(0)
 
+    para_adoma = multiprocessing.Process(target=check_clolision, args=(q,qValid,))
+    para_adoma.start()
+
     for i in range(1, num_balls+1):
         process  = multiprocessing.Process(target=create_ball, args=(i,q,))
         process .start()
-
-
-
-
-
 
 
     while True:
@@ -60,7 +86,8 @@ if __name__ == '__main__':
             if event.type == pygame.QUIT:
                 break
 
-        color, pos = q.get()
+        color, pos = qValid.get()
+
         pygame.draw.circle(screen, color, pos, 30)
         pygame.display.flip()
 
